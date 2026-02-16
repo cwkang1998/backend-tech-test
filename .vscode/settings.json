@@ -1,0 +1,5 @@
+{
+    "biome.configurationPath": "backend/biome.json",
+    "biome.enabled": true,
+    "biome.lsp.bin": "backend/node_modules/.bin/biome"
+}
