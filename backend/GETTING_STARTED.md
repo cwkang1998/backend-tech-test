@@ -29,7 +29,7 @@ Following is the env vars that the server supports
 | `DB_USER` | MySQL user |
 | `DB_PASSWORD` | MySQL password |
 | `DB_NAME` | MySQL database name |
-| `PORT` | Port the server listens on (default: `3000`) |
+| `PORT` | Port the server listens on (default: `8181`) |
 
 ### 3. Run in development mode
 
