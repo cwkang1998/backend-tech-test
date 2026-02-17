@@ -5,6 +5,39 @@ info:
   description: API for querying market TVL and liquidity metrics.
 
 paths:
+  /:
+    get:
+      summary: Health check
+      description: Returns the health status of the service, including database connectivity.
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service is running and the database connection is healthy.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - db_alive
+                properties:
+                  db_alive:
+                    type: boolean
+              example:
+                db_alive: true
+        '503':
+          description: Service is running but the database connection is unavailable.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - db_alive
+                properties:
+                  db_alive:
+                    type: boolean
+              example:
+                db_alive: false
+
   /tvl:
     get:
       summary: Get total TVL
