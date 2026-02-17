@@ -1,0 +1,203 @@
+openapi: 3.0.3
+info:
+  title: Market Metrics API
+  version: 1.0.0
+  description: API for querying market TVL and liquidity metrics.
+
+paths:
+  /tvl:
+    get:
+      summary: Get total TVL
+      description: Returns the total value locked (TVL) across all markets, optionally filtered by chain ID.
+      operationId: getMarketTvl
+      parameters:
+        - in: query
+          name: chain_id
+          required: false
+          schema:
+            $ref: '#/components/schemas/ChainId'
+          description: Optional chain ID to filter TVL by chain.
+      responses:
+        '200':
+          description: Successfully retrieved TVL.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarketTvlResponse'
+        '400':
+          description: Invalid query parameters.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+        '500':
+          description: Unexpected server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+
+  /tvl/{marketId}:
+    get:
+      summary: Get TVL by market ID
+      description: Returns the total value locked (TVL) for a specific market.
+      operationId: getMarketTvlByMarketId
+      parameters:
+        - in: path
+          name: marketId
+          required: true
+          schema:
+            $ref: '#/components/schemas/MarketId'
+          description: The unique identifier of the market.
+      responses:
+        '200':
+          description: Successfully retrieved TVL for the specified market.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarketTvlResponse'
+        '400':
+          description: Invalid path parameters.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+        '500':
+          description: Unexpected server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+
+  /liquidity:
+    get:
+      summary: Get total liquidity
+      description: Returns the total liquidity across all markets, optionally filtered by chain ID.
+      operationId: getMarketLiquidity
+      parameters:
+        - in: query
+          name: chain_id
+          required: false
+          schema:
+            $ref: '#/components/schemas/ChainId'
+          description: Optional chain ID to filter liquidity by chain.
+      responses:
+        '200':
+          description: Successfully retrieved liquidity.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarketLiquidityResponse'
+        '400':
+          description: Invalid query parameters.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+        '500':
+          description: Unexpected server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+
+  /liquidity/{marketId}:
+    get:
+      summary: Get liquidity by market ID
+      description: Returns the liquidity for a specific market.
+      operationId: getMarketLiquidityByMarketId
+      parameters:
+        - in: path
+          name: marketId
+          required: true
+          schema:
+            $ref: '#/components/schemas/MarketId'
+          description: The unique identifier of the market.
+      responses:
+        '200':
+          description: Successfully retrieved liquidity for the specified market.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarketLiquidityResponse'
+        '400':
+          description: Invalid path parameters.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+        '500':
+          description: Unexpected server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+
+components:
+  schemas:
+    ChainId:
+      description: Blockchain network chain ID.
+      type: string
+      enum:
+        - "1"
+        - "56"
+      example: "1"
+
+    MarketId:
+      description: A positive integer uniquely identifying a market.
+      type: integer
+      minimum: 1
+      example: 42
+
+    MarketTvlResponse:
+      type: object
+      required:
+        - marketTvl
+      properties:
+        marketTvl:
+          type: string
+          description: The total value locked, represented as a numeric string.
+          example: "1000000"
+
+    MarketLiquidityResponse:
+      type: object
+      required:
+        - marketLiquidity
+      properties:
+        marketLiquidity:
+          type: string
+          description: The total liquidity, represented as a numeric string.
+          example: "500000"
+
+    ErrorResponse:
+      type: object
+      description: Standard error envelope returned on all error responses.
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          description: Human-readable error description.
+          example: "Unexpected error occurred"
+        details:
+          type: object
+          description: Optional additional context about the error.
+          nullable: true
+          additionalProperties: true
+
+    ValidationErrorResponse:
+      allOf:
+        - $ref: '#/components/schemas/ErrorResponse'
+      example:
+        message: "Validation error"
+        details:
+          formErrors: []
+          fieldErrors:
+            chain_id:
+              - "Invalid enum value. Expected '1' | '56'"
+
+    ServerErrorResponse:
+      allOf:
+        - $ref: '#/components/schemas/ErrorResponse'
+      example:
+        message: "Unexpected error occurred"
