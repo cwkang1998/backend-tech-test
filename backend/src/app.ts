@@ -2,7 +2,12 @@ import cors from "cors";
 import express, { type Express, type Request, type Response } from "express";
 import morgan from "morgan";
 import type { Pool } from "mysql2/promise";
-import { marketTvlByMarketIdHandler, marketTvlHandler } from "./handlers";
+import {
+	marketLiquidityByMarketIdHandler,
+	marketLiquidityHandler,
+	marketTvlByMarketIdHandler,
+	marketTvlHandler,
+} from "./handlers";
 import { MarketService } from "./services";
 
 export const createApp = (pool: Pool) => {
@@ -34,6 +39,11 @@ export const createApp = (pool: Pool) => {
 
 	app.get("/tvl", marketTvlHandler(marketService));
 	app.get("/tvl/:marketId", marketTvlByMarketIdHandler(marketService));
+	app.get("/liquidity", marketLiquidityHandler(marketService));
+	app.get(
+		"/liquidity/:marketId",
+		marketLiquidityByMarketIdHandler(marketService),
+	);
 
 	return app;
 };

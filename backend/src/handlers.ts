@@ -6,7 +6,7 @@ import { chainIdSchema } from "./types";
 
 export const marketTvlHandler =
 	(marketService: IMarketService) => async (req: Request, res: Response) => {
-		const params = tvlHandlerRequestQueryParamsSchema.safeParse(req.query);
+		const params = metricsHandlerRequestQueryParamsSchema.safeParse(req.query);
 
 		if (!params.success) {
 			return res.status(400).json(convertZodErrToHttpResponse(params.error));
@@ -27,7 +27,7 @@ export const marketTvlHandler =
 
 export const marketTvlByMarketIdHandler =
 	(marketService: IMarketService) => async (req: Request, res: Response) => {
-		const params = tvlByMarketIdHandlerRequestQueryParamsSchema.safeParse(
+		const params = metricsByMarketIdHandlerRequestQueryParamsSchema.safeParse(
 			req.params,
 		);
 
@@ -50,7 +50,53 @@ export const marketTvlByMarketIdHandler =
 		return res.status(200).json(handlerResponse);
 	};
 
-const tvlHandlerRequestQueryParamsSchema = z
+export const marketLiquidityHandler =
+	(marketService: IMarketService) => async (req: Request, res: Response) => {
+		const params = metricsHandlerRequestQueryParamsSchema.safeParse(req.query);
+
+		if (!params.success) {
+			return res.status(400).json(convertZodErrToHttpResponse(params.error));
+		}
+
+		const handlerResponse = { marketLiquidity: "0" };
+
+		try {
+			const tvlResult = await marketService.getLiquidity(params.data);
+			handlerResponse.marketLiquidity = tvlResult.liquidity.toString();
+		} catch (err) {
+			console.error(err);
+			return res.status(500).json(HttpError.SERVER_UNEXPECTED_ERROR_RESPONSE);
+		}
+
+		return res.status(200).json(handlerResponse);
+	};
+
+export const marketLiquidityByMarketIdHandler =
+	(marketService: IMarketService) => async (req: Request, res: Response) => {
+		const params = metricsByMarketIdHandlerRequestQueryParamsSchema.safeParse(
+			req.params,
+		);
+
+		if (!params.success) {
+			return res.status(400).json(convertZodErrToHttpResponse(params.error));
+		}
+
+		const handlerResponse = { marketLiquidity: "0" };
+
+		try {
+			const tvlResult = await marketService.getLiquidityByMarketId(
+				params.data.marketId,
+			);
+			handlerResponse.marketLiquidity = tvlResult.liquidity.toString();
+		} catch (err) {
+			console.error(err);
+			return res.status(500).json(HttpError.SERVER_UNEXPECTED_ERROR_RESPONSE);
+		}
+
+		return res.status(200).json(handlerResponse);
+	};
+
+const metricsHandlerRequestQueryParamsSchema = z
 	.object({
 		chain_id: chainIdSchema.optional(),
 	})
@@ -58,6 +104,6 @@ const tvlHandlerRequestQueryParamsSchema = z
 		chainId: raw.chain_id,
 	}));
 
-const tvlByMarketIdHandlerRequestQueryParamsSchema = z.object({
-	marketId: z.coerce.number().int(),
+const metricsByMarketIdHandlerRequestQueryParamsSchema = z.object({
+	marketId: z.coerce.number().int().positive(),
 });
