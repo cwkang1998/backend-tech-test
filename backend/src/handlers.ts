@@ -1,6 +1,10 @@
 import type { Request, Response } from "express";
 import { z } from "zod";
-import { convertZodErrToHttpResponse, HttpError } from "./http";
+import {
+	convertZodErrToHttpResponse,
+	HttpError,
+	HttpErrorResponse,
+} from "./http";
 import type { IMarketService } from "./services";
 import { chainIdSchema } from "./types";
 
@@ -41,6 +45,16 @@ export const marketTvlByMarketIdHandler =
 			const tvlResult = await marketService.getTvlByMarketId(
 				params.data.marketId,
 			);
+			if (tvlResult === null) {
+				return res
+					.status(404)
+					.json(
+						HttpErrorResponse(
+							`Market with id ${params.data.marketId} not found`,
+						),
+					);
+			}
+
 			handlerResponse.marketTvl = tvlResult.tvl.toString();
 		} catch (err) {
 			console.error(err);
@@ -87,6 +101,16 @@ export const marketLiquidityByMarketIdHandler =
 			const tvlResult = await marketService.getLiquidityByMarketId(
 				params.data.marketId,
 			);
+			if (tvlResult === null) {
+				return res
+					.status(404)
+					.json(
+						HttpErrorResponse(
+							`Market with id ${params.data.marketId} not found`,
+						),
+					);
+			}
+
 			handlerResponse.marketLiquidity = tvlResult.liquidity.toString();
 		} catch (err) {
 			console.error(err);

@@ -4,9 +4,9 @@ import type { ChainId } from "../types";
 
 export interface IMarketService {
 	getTvl(params: GetMetricParams): Promise<MarketTvl>;
-	getTvlByMarketId(marketId: number): Promise<MarketTvl>;
+	getTvlByMarketId(marketId: number): Promise<MarketTvl | null>;
 	getLiquidity(params: GetMetricParams): Promise<MarketLiquidity>;
-	getLiquidityByMarketId(marketId: number): Promise<MarketLiquidity>;
+	getLiquidityByMarketId(marketId: number): Promise<MarketLiquidity | null>;
 }
 
 /**
@@ -33,13 +33,17 @@ export class MarketService implements IMarketService {
 		return parsedResult.data;
 	}
 
-	async getTvlByMarketId(marketId: number): Promise<MarketTvl> {
+	async getTvlByMarketId(marketId: number): Promise<MarketTvl | null> {
 		const [rows] = await this.pool.query<RowDataPacket[]>(
 			TVL_BY_MARKET_ID_QUERY,
 			[marketId],
 		);
 
 		const firstRow = rows[0];
+		if (firstRow === undefined) {
+			return null;
+		}
+
 		const parsedResult = marketTvlSchema.safeParse(firstRow);
 
 		if (!parsedResult.success) {
@@ -66,13 +70,19 @@ export class MarketService implements IMarketService {
 		return parsedResult.data;
 	}
 
-	async getLiquidityByMarketId(marketId: number): Promise<MarketLiquidity> {
+	async getLiquidityByMarketId(
+		marketId: number,
+	): Promise<MarketLiquidity | null> {
 		const [rows] = await this.pool.query<RowDataPacket[]>(
 			LIQUIDITY_BY_MARKET_ID_QUERY,
 			[marketId],
 		);
 
 		const firstRow = rows[0];
+		if (firstRow === undefined) {
+			return null;
+		}
+
 		const parsedResult = marketLiquiditySchema.safeParse(firstRow);
 
 		if (!parsedResult.success) {

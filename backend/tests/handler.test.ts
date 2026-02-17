@@ -163,7 +163,7 @@ describe("test handlers", () => {
 			expect(res.json).toHaveBeenCalledWith({ marketTvl: "1200" });
 		});
 
-		it("should return 400 when provided query params validation failed", async () => {
+		it("should return 400 when provided params validation failed", async () => {
 			const service = createMockService();
 			jest
 				.spyOn(service, "getTvlByMarketId")
@@ -185,6 +185,23 @@ describe("test handlers", () => {
 					formErrors: [],
 				},
 				message: "Validation error",
+			});
+		});
+
+		it("should return 404 when provided market id does not exist in db", async () => {
+			const service = createMockService();
+			jest.spyOn(service, "getTvlByMarketId").mockResolvedValue(null);
+			// Chain id is an enum and should be string
+			const req = {
+				params: { marketId: "1000" },
+			} as unknown as Request;
+			const res = createResponseMock();
+
+			await marketTvlByMarketIdHandler(service)(req, res);
+
+			expect(res.status).toHaveBeenCalledWith(404);
+			expect(res.json).toHaveBeenCalledWith({
+				message: "Market with id 1000 not found",
 			});
 		});
 
@@ -357,7 +374,7 @@ describe("test handlers", () => {
 			expect(res.json).toHaveBeenCalledWith({ marketLiquidity: "1200" });
 		});
 
-		it("should return 400 when provided query params validation failed", async () => {
+		it("should return 400 when provided params validation failed", async () => {
 			const service = createMockService();
 			jest
 				.spyOn(service, "getLiquidityByMarketId")
@@ -379,6 +396,23 @@ describe("test handlers", () => {
 					formErrors: [],
 				},
 				message: "Validation error",
+			});
+		});
+
+		it("should return 404 when provided market id does not exist in db", async () => {
+			const service = createMockService();
+			jest.spyOn(service, "getLiquidityByMarketId").mockResolvedValue(null);
+			// Chain id is an enum and should be string
+			const req = {
+				params: { marketId: "1000" },
+			} as unknown as Request;
+			const res = createResponseMock();
+
+			await marketLiquidityByMarketIdHandler(service)(req, res);
+
+			expect(res.status).toHaveBeenCalledWith(404);
+			expect(res.json).toHaveBeenCalledWith({
+				message: "Market with id 1000 not found",
 			});
 		});
 

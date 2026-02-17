@@ -75,6 +75,14 @@ describe("integration test", () => {
 			expect(res.body).toHaveProperty("details");
 			expect(res.body.message).toEqual("Validation error");
 		});
+
+		it("should return not found when given marketId that does not exist in db", async () => {
+			const res = await testAgent.get("/liquidity/1000");
+
+			expect(res.status).toBe(404);
+			expect(res.body).toHaveProperty("message");
+			expect(res.body.message).toEqual("Market with id 1000 not found");
+		});
 	});
 
 	describe("/liquidity", () => {
@@ -129,6 +137,14 @@ describe("integration test", () => {
 			expect(res.body).toHaveProperty("message");
 			expect(res.body).toHaveProperty("details");
 			expect(res.body.message).toEqual("Validation error");
+		});
+
+		it("should return not found when given marketId that does not exist in db", async () => {
+			const res = await testAgent.get("/liquidity/1000");
+
+			expect(res.status).toBe(404);
+			expect(res.body).toHaveProperty("message");
+			expect(res.body.message).toEqual("Market with id 1000 not found");
 		});
 	});
 });
