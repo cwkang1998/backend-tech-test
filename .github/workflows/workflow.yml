@@ -63,4 +63,5 @@ jobs:
         run: yarn test:unit
 
       - name: Integration tests
+        working-directory: .
         run: bash run-integration-tests.sh
