@@ -63,5 +63,5 @@ jobs:
         run: yarn test:unit
 
       - name: Integration tests
-        working-directory: .
-        run: bash run-integration-tests.sh
+        working-directory: ${{ github.workspace }}
+        run: bash run_integration.sh
