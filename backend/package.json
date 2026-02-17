@@ -8,8 +8,8 @@
 		"dev": "nodemon --watch \"src/**\" --exec ts-node src/index.ts",
 		"check:write": "biome check --write",
 		"build": "tsc",
-		"test": "jest --runInBand --detectOpenHandles",
-		"test:unit": "jest --runInBand --detectOpenHandles tests/handler.test.ts"
+		"test:unit": "jest --runInBand --detectOpenHandles tests/handler.test.ts tests/services/*.ts",
+		"test:integration": "jest --runInBand --detectOpenHandles tests/integration.test.ts"
 	},
 	"dependencies": {
 		"cors": "^2.8.5",
@@ -26,8 +26,10 @@
 		"@types/express": "^4.17.17",
 		"@types/morgan": "^1.9.10",
 		"@types/node": "^18.15.11",
+		"@types/supertest": "^6.0.3",
 		"jest": "^30.2.0",
 		"nodemon": "^2.0.22",
+		"supertest": "^7.2.2",
 		"ts-jest": "^29.4.6",
 		"ts-node": "^10.9.1",
 		"typescript": "^5.0.4"

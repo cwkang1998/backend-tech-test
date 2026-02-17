@@ -7,7 +7,7 @@ import {
 	jest,
 } from "@jest/globals";
 import type { Request, Response } from "express";
-import { marketTvlHandler } from "../src/handlers";
+import { marketTvlByMarketIdHandler, marketTvlHandler } from "../src/handlers";
 import {
 	type IMarketService,
 	UnexpectedSchemaShapeError,
@@ -16,7 +16,7 @@ import {
 const createMockService = (): jest.Mocked<IMarketService> => {
 	return {
 		getTvl: jest.fn(),
-		getLiquidity: jest.fn(),
+		getTvlByMarketId: jest.fn(),
 	} as jest.Mocked<IMarketService>;
 };
 
@@ -30,60 +30,191 @@ const createResponseMock = (): Response => {
 };
 
 describe("test handlers", () => {
-	beforeEach(() => {
-		// Empty out logs to reduce std out clutter.
-		jest.spyOn(console, "error").mockImplementation(() => {});
-	});
+	describe("marketTvlHandler", () => {
+		beforeEach(() => {
+			// Empty out logs to reduce std out clutter.
+			jest.spyOn(console, "error").mockImplementation(() => {});
+		});
 
-	afterEach(() => {
-		jest.restoreAllMocks();
-	});
+		afterEach(() => {
+			jest.restoreAllMocks();
+		});
 
-	it("should return 200 when tvl calculated from service", async () => {
-		const service = createMockService();
-		jest.spyOn(service, "getTvl").mockResolvedValue({ tvl: BigInt(4000) });
-		const req = {} as Request;
-		const res = createResponseMock();
+		it("should return 200 when tvl calculated from service", async () => {
+			const service = createMockService();
+			jest.spyOn(service, "getTvl").mockResolvedValue({ tvl: BigInt(4000) });
+			const req = { query: {} } as Request;
+			const res = createResponseMock();
 
-		await marketTvlHandler(service)(req, res);
+			await marketTvlHandler(service)(req, res);
 
-		expect(res.status).toHaveBeenCalledWith(200);
-		expect(res.json).toHaveBeenCalledWith({ marketTvl: "4000" });
-	});
+			expect(res.status).toHaveBeenCalledWith(200);
+			expect(res.json).toHaveBeenCalledWith({ marketTvl: "4000" });
+		});
 
-	it("should return 500 when unexpected schema is returned from query", async () => {
-		const service = createMockService();
-		jest
-			.spyOn(service, "getTvl")
-			.mockRejectedValue(
-				new UnexpectedSchemaShapeError("Mock unexpected schema"),
-			);
+		it("should return 200 when provided query params validation pass", async () => {
+			const service = createMockService();
+			jest.spyOn(service, "getTvl").mockResolvedValue({ tvl: BigInt(4000) });
+			const req = {
+				query: { chain_id: "1" },
+			} as unknown as Request;
+			const res = createResponseMock();
 
-		const req = {} as Request;
-		const res = createResponseMock();
+			await marketTvlHandler(service)(req, res);
 
-		await marketTvlHandler(service)(req, res);
+			expect(res.status).toHaveBeenCalledWith(200);
+			expect(res.json).toHaveBeenCalledWith({ marketTvl: "4000" });
+		});
 
-		expect(res.status).toHaveBeenCalledWith(500);
-		expect(res.json).toHaveBeenCalledWith({
-			message: "Unexpected error occurred",
+		it("should return 400 when provided query params validation failed", async () => {
+			const service = createMockService();
+			jest.spyOn(service, "getTvl").mockResolvedValue({ tvl: BigInt(4000) });
+			// Chain id is an enum and should be string
+			const req = {
+				query: { chain_id: 1 },
+			} as unknown as Request;
+			const res = createResponseMock();
+
+			await marketTvlHandler(service)(req, res);
+
+			expect(res.status).toHaveBeenCalledWith(400);
+			expect(res.json).toHaveBeenCalledWith({
+				details: {
+					fieldErrors: {
+						chain_id: ['Invalid option: expected one of "1"|"56"'],
+					},
+					formErrors: [],
+				},
+				message: "Validation error",
+			});
+		});
+
+		it("should return 500 when unexpected schema is returned from query", async () => {
+			const service = createMockService();
+			jest
+				.spyOn(service, "getTvl")
+				.mockRejectedValue(
+					new UnexpectedSchemaShapeError("Mock unexpected schema"),
+				);
+
+			const req = { query: {} } as Request;
+			const res = createResponseMock();
+
+			await marketTvlHandler(service)(req, res);
+
+			expect(res.status).toHaveBeenCalledWith(500);
+			expect(res.json).toHaveBeenCalledWith({
+				message: "Unexpected error occurred",
+			});
+		});
+
+		it("should return 500 when unexpected error occurred", async () => {
+			const service = createMockService();
+			jest
+				.spyOn(service, "getTvl")
+				.mockRejectedValue(new Error("Possibly db error"));
+
+			const req = { query: {} } as Request;
+			const res = createResponseMock();
+
+			await marketTvlHandler(service)(req, res);
+
+			expect(res.status).toHaveBeenCalledWith(500);
+			expect(res.json).toHaveBeenCalledWith({
+				message: "Unexpected error occurred",
+			});
 		});
 	});
 
-	it("should return 500 when unexpected error occured", async () => {
-		const service = createMockService();
-		jest
-			.spyOn(service, "getTvl")
-			.mockRejectedValue(new Error("Possibly db error"));
+	describe("marketTvlByMarketIdHandler", () => {
+		beforeEach(() => {
+			// Empty out logs to reduce std out clutter.
+			jest.spyOn(console, "error").mockImplementation(() => {});
+		});
 
-		const req = {} as Request;
-		const res = createResponseMock();
+		afterEach(() => {
+			jest.restoreAllMocks();
+		});
 
-		await marketTvlHandler(service)(req, res);
+		it("should return 200 when tvl calculated from service", async () => {
+			const service = createMockService();
+			jest
+				.spyOn(service, "getTvlByMarketId")
+				.mockImplementation((marketId: number) => {
+					if (marketId === 1) {
+						return Promise.resolve({ tvl: BigInt(1200) });
+					}
+					return Promise.resolve({ tvl: BigInt(0) });
+				});
 
-		expect(res.status).toHaveBeenCalledWith(500);
-		expect(res.json).toHaveBeenCalledWith({
-			message: "Unexpected error occurred",
+			const req = { params: { marketId: 1 } } as unknown as Request;
+			const res = createResponseMock();
+
+			await marketTvlByMarketIdHandler(service)(req, res);
+
+			expect(res.status).toHaveBeenCalledWith(200);
+			expect(res.json).toHaveBeenCalledWith({ marketTvl: "1200" });
+		});
+
+		it("should return 400 when provided query params validation failed", async () => {
+			const service = createMockService();
+			jest
+				.spyOn(service, "getTvlByMarketId")
+				.mockResolvedValue({ tvl: BigInt(4000) });
+			// Chain id is an enum and should be string
+			const req = {
+				params: { marketId: "abc" },
+			} as unknown as Request;
+			const res = createResponseMock();
+
+			await marketTvlByMarketIdHandler(service)(req, res);
+
+			expect(res.status).toHaveBeenCalledWith(400);
+			expect(res.json).toHaveBeenCalledWith({
+				details: {
+					fieldErrors: {
+						marketId: ["Invalid input: expected number, received NaN"],
+					},
+					formErrors: [],
+				},
+				message: "Validation error",
+			});
+		});
+
+		it("should return 500 when unexpected schema is returned from query", async () => {
+			const service = createMockService();
+			jest
+				.spyOn(service, "getTvlByMarketId")
+				.mockRejectedValue(
+					new UnexpectedSchemaShapeError("Mock unexpected schema"),
+				);
+
+			const req = { params: { marketId: 1 } } as unknown as Request;
+			const res = createResponseMock();
+
+			await marketTvlByMarketIdHandler(service)(req, res);
+
+			expect(res.status).toHaveBeenCalledWith(500);
+			expect(res.json).toHaveBeenCalledWith({
+				message: "Unexpected error occurred",
+			});
+		});
+
+		it("should return 500 when unexpected error occurred", async () => {
+			const service = createMockService();
+			jest
+				.spyOn(service, "getTvlByMarketId")
+				.mockRejectedValue(new Error("Possibly db error"));
+
+			const req = { params: { marketId: 1 } } as unknown as Request;
+			const res = createResponseMock();
+
+			await marketTvlByMarketIdHandler(service)(req, res);
+
+			expect(res.status).toHaveBeenCalledWith(500);
+			expect(res.json).toHaveBeenCalledWith({
+				message: "Unexpected error occurred",
+			});
 		});
 	});
 });

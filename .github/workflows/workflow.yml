@@ -63,4 +63,4 @@ jobs:
         run: yarn test:unit
 
       - name: Integration tests
-        run: yarn test:integration
+        run: bash scripts/run-integration-tests.sh
